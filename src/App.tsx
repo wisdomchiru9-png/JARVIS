@@ -390,6 +390,7 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [reminders, setReminders] = useState<{ id: string, text: string, time: string }[]>([])
+  const [audioData, setAudioData] = useState<number[]>(new Array(32).fill(0))
   const [vocalSettings, setVocalSettings] = useState({
     pitch: 0.82,
     rate: 0.9,
