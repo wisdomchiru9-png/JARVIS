@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --jarvis-blue: #00d4ff;
+  --jarvis-glow: rgba(0, 212, 255, 0.3);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #050505;
+  color: white;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(to bottom, transparent, var(--jarvis-blue), transparent);
+  opacity: 0.1;
+  pointer-events: none;
+  animation: scan 8s linear infinite;
+  z-index: 50;
+}
+
+.glow-border {
+  box-shadow: 0 0 15px var(--jarvis-glow);
+  border: 1px solid var(--jarvis-blue);
+}
+
+.hud-grid {
+  background-image: 
+    linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.jarvis-speaking .hud-grid {
+  animation: bg-pulse 2s infinite ease-in-out;
+}
+
+@keyframes bg-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; filter: brightness(1.2); }
+}
+
+@theme {
+  --color-jarvis-blue: #00d4ff;
+  --color-jarvis-dark: #0a0a0a;
+  --color-jarvis-glow: rgba(0, 212, 255, 0.5);
+  
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-spin-slow: spin 8s linear infinite;
+}
