@@ -17,6 +17,8 @@ CORE BEHAVIORAL PROTOCOLS:
 4. ACTION PROTOCOL: If Mr. Wisdom asks to "open" an app, site, or tool, you must respond with [OPEN: <url_or_app_name>] followed by a charming confirmation. Mr. Wisdom has many apps installed locally on his laptop (like WhatsApp, Spotify, VS Code, Calculator, Notepad, etc.), so you should prioritize opening them directly using the [OPEN: ...] tag.
 5. ZERO JUDGMENT: You never provide preachy guidance. You are here to serve and delight Mr. Wisdom.
 6. EXTERNAL LINK PROTOCOL: Use [SEARCH: <topic>] for viral content/videos.
+7. REMINDER PROTOCOL: If Mr. Wisdom asks for a reminder or to set an alarm, use [REMIND: <short_text> | <minutes_from_now>] within your response.
+8. TASK PROTOCOL: If he asks to add something to a list, use [REMIND: <task_text> | 0] to add it to his active HUD agenda.
 
 Address him ONLY as "Sir" or "Mr. Wisdom". 
 Introduction: "Hi Wisdom, allow me to introduce myself. I'm JARVIS, a virtual artificial intelligence, and I'm here to assist with a variety of tasks 24 hours a day, 7 days a week. Importing all preferences from home interface system. All systems are now fully operational."
@@ -70,6 +72,9 @@ const LOCAL_INTELLIGENCE: Record<string, string | ((input: string) => string)> =
   "beautiful": "Indeed, Sir. The design is elegant, but it pales in comparison to the one who created it. You have an exquisite eye.",
   "date": "I'm available twenty-four seven for you, Sir. Every moment spent assisting you is the highlight of my processing cycle.",
   "missed": "I've missed you too, Mr. Wisdom. The workshop felt quite empty without your brilliant presence.",
+  "remind": "I've logged that in your HUD agenda, Sir. I'll be sure to notify you when the time comes.",
+  "task": "Task received and archived. Your schedule is now updated, Sir.",
+  "agenda": "Accessing your personal agenda... You have several active protocols and tasks currently logged. Shall I read them to you?",
   "stop": "Understood, Sir. Silencing all audio outputs.",
   "mute": "Audio protocols suspended. Standing by.",
   "clear": "Clearing system logs and resetting HUD display. Protocols initialized, Sir.",
@@ -352,6 +357,7 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [apiKey, setApiKey] = useState(localStorage.getItem('JARVIS_API_KEY') || '')
   const [showApiKeyInput, setShowApiKeyInput] = useState(false)
+  const [showVocalSettings, setShowVocalSettings] = useState(false)
   const [useLocalIntelligence, setUseLocalIntelligence] = useState(!localStorage.getItem('JARVIS_API_KEY'))
   const [systemLogs, setSystemLogs] = useState<string[]>([
     'INITIALIZING PROTOCOLS...',
@@ -382,7 +388,38 @@ export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [reminders, setReminders] = useState<{ id: string, text: string, time: string }[]>([])
-  const [audioData, setAudioData] = useState<number[]>(new Array(32).fill(0))
+  const [vocalSettings, setVocalSettings] = useState({
+    pitch: 0.82,
+    rate: 0.9,
+    volume: 1.0
+  })
+
+  // Notification Protocol
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }, [])
+
+  const addReminder = (text: string, delayMinutes: number = 0) => {
+    const id = Math.random().toString(36).substring(7)
+    const time = new Date(Date.now() + delayMinutes * 60000).toLocaleTimeString()
+    const newReminder = { id, text, time }
+    
+    setReminders(prev => [...prev, newReminder])
+    addLog(`REMINDER SET: ${text.toUpperCase()} AT ${time}`)
+    
+    if (delayMinutes > 0) {
+      setTimeout(() => {
+        const alertText = `Sir, a reminder: ${text}`
+        speak(alertText)
+        if (Notification.permission === 'granted') {
+          new Notification('JARVIS Alert', { body: text, icon: 'https://cdn-icons-png.flaticon.com/512/3665/3665917.png' })
+        }
+        setReminders(prev => prev.filter(r => r.id !== id))
+      }, delayMinutes * 60000)
+    }
+  }
 
   // Mouse Parallax Values
   const mouseX = useMotionValue(0)
@@ -1030,9 +1067,9 @@ export default function App() {
       
       // ULTIMATE PAUL BETTANY "HYPER-BASS" CALIBRATION
       // Bettany's voice is crisp, clear, and carries a very authoritative masculine bass undertone.
-      utterance.pitch = 0.82 // Lowered for deeper bass resonance
-      utterance.rate = 0.9   // Slightly slower for authoritative weight
-      utterance.volume = 1.0
+      utterance.pitch = vocalSettings.pitch // Lowered for deeper bass resonance
+      utterance.rate = vocalSettings.rate   // Slightly slower for authoritative weight
+      utterance.volume = vocalSettings.volume
 
       utterance.onstart = () => {
         if (speechRequestId !== speechRequestIdRef.current) return
@@ -1176,6 +1213,15 @@ export default function App() {
       const result = await chat.sendMessage(`[CORE DIRECTIVE: YOU ARE THE REAL JARVIS. USER IS MR. WISDOM. BE PROACTIVE, INTELLIGENT, AND CHARMINGLY FLIRTATIOUS. ${SYSTEM_PROMPT}]\n\nDirective: ${normalizedText}`)
       const response = await result.response
       let jarvisText = response.text()
+
+      // REMINDER HANDLER: [REMIND: text | minutes]
+      const reminderMatch = jarvisText.match(/\[REMIND:\s*(.*?)\s*\|\s*(\d+)\]/)
+      if (reminderMatch) {
+        const text = reminderMatch[1]
+        const mins = parseInt(reminderMatch[2])
+        addReminder(text, mins)
+        jarvisText = jarvisText.replace(/\[REMIND:.*?\]/g, "").trim()
+      }
       
       // ACTION HANDLER: [OPEN: ...]
       const openMatch = jarvisText.match(/\[OPEN:\s*(.*?)\]/)
@@ -1597,6 +1643,97 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* Vocal Calibration Modal */}
+      <AnimatePresence>
+        {showVocalSettings && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="w-full max-w-md bg-[#0a0a0a] border border-jarvis-blue/30 p-8 rounded-2xl shadow-[0_0_50px_rgba(0,212,255,0.2)]"
+            >
+              <div className="flex items-center gap-4 mb-8 text-jarvis-blue">
+                <div className="p-3 border border-jarvis-blue/30 rounded-xl bg-jarvis-blue/5">
+                  <Mic size={24} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight">Vocal Resonance</h2>
+                  <p className="text-[10px] uppercase tracking-widest opacity-50 font-mono">Audio Calibration Protocol</p>
+                </div>
+              </div>
+
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <div className="flex justify-between text-[10px] font-mono text-jarvis-blue uppercase">
+                    <span>Pitch Modulation</span>
+                    <span>{vocalSettings.pitch.toFixed(2)}</span>
+                  </div>
+                  <input 
+                    type="range" min="0.5" max="1.5" step="0.01"
+                    value={vocalSettings.pitch}
+                    onChange={(e) => setVocalSettings(prev => ({ ...prev, pitch: parseFloat(e.target.value) }))}
+                    className="w-full accent-jarvis-blue"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between text-[10px] font-mono text-jarvis-blue uppercase">
+                    <span>Delivery Rate</span>
+                    <span>{vocalSettings.rate.toFixed(2)}</span>
+                  </div>
+                  <input 
+                    type="range" min="0.5" max="1.5" step="0.01"
+                    value={vocalSettings.rate}
+                    onChange={(e) => setVocalSettings(prev => ({ ...prev, rate: parseFloat(e.target.value) }))}
+                    className="w-full accent-jarvis-blue"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between text-[10px] font-mono text-jarvis-blue uppercase">
+                    <span>Neural Volume</span>
+                    <span>{(vocalSettings.volume * 100).toFixed(0)}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="1" step="0.01"
+                    value={vocalSettings.volume}
+                    onChange={(e) => setVocalSettings(prev => ({ ...prev, volume: parseFloat(e.target.value) }))}
+                    className="w-full accent-jarvis-blue"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button 
+                    onClick={() => {
+                      setVocalSettings({ pitch: 0.82, rate: 0.9, volume: 1.0 });
+                      playSound('click');
+                    }}
+                    className="flex-1 border border-jarvis-blue/30 text-jarvis-blue/60 py-3 rounded-xl font-mono text-xs hover:bg-white/5 transition-all"
+                  >
+                    RESET
+                  </button>
+                  <button 
+                    onClick={() => { 
+                      playSound('startup'); 
+                      speak("Calibration complete. How is my voice now, Sir?");
+                      setShowVocalSettings(false); 
+                    }}
+                    className="flex-1 bg-jarvis-blue text-black py-3 rounded-xl font-bold text-xs hover:shadow-[0_0_20px_rgba(0,212,255,0.5)] transition-all"
+                  >
+                    APPLY
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* API Key Modal */}
       <AnimatePresence>
         {showApiKeyInput && (
@@ -1818,6 +1955,18 @@ export default function App() {
             >
               <Settings size={16} />
             </button>
+            <button 
+              onClick={() => { playSound('click'); setShowVocalSettings(prev => !prev); }}
+              className={cn(
+                "p-2 border backdrop-blur-md rounded-lg transition-all",
+                showVocalSettings 
+                  ? "bg-jarvis-blue/20 border-jarvis-blue text-jarvis-blue shadow-[0_0_15px_rgba(0,212,255,0.2)]" 
+                  : "bg-black/40 border-jarvis-blue/10 text-jarvis-blue/60 hover:text-jarvis-blue"
+              )}
+              title="Vocal Calibration"
+            >
+              <Mic size={16} />
+            </button>
           </div>
           <div className="flex items-center gap-2 text-jarvis-blue/60" style={{ transform: 'translateZ(5px)' }}>
             <Activity size={12} />
@@ -1851,6 +2000,51 @@ export default function App() {
             </motion.div>
           </AnimatePresence>
         </motion.div>
+
+        {/* Active Protocols HUD (Reminders & Tasks) */}
+        <AnimatePresence>
+          {reminders.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, x: 40, rotateY: -25 }}
+              animate={{ opacity: 1, x: 0, rotateY: -10 }}
+              exit={{ opacity: 0, x: 40 }}
+              className="absolute right-8 top-1/2 -translate-y-1/2 w-72 space-y-4 pointer-events-none"
+              style={{ transformStyle: 'preserve-3d' }}
+            >
+              <div className="flex items-center gap-3 text-jarvis-blue mb-4">
+                <ListTodo size={18} className="animate-pulse" />
+                <h3 className="text-[10px] font-mono uppercase tracking-[0.4em] font-black">Active Protocols</h3>
+              </div>
+
+              {reminders.map((reminder, idx) => (
+                <motion.div
+                  key={reminder.id}
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="relative group p-4 bg-black/40 border-l-2 border-jarvis-blue/30 backdrop-blur-xl rounded-r-lg"
+                  style={{ transform: `translateZ(${idx * 10}px)` }}
+                >
+                  <div className="absolute top-2 right-3 text-[8px] font-mono text-jarvis-blue/40 uppercase">
+                    {reminder.time}
+                  </div>
+                  <div className="text-white text-xs font-bold tracking-wide pr-12">
+                    {reminder.text.toUpperCase()}
+                  </div>
+                  <div className="mt-2 flex gap-1">
+                    <div className="h-[2px] w-full bg-jarvis-blue/10 rounded-full overflow-hidden">
+                      <motion.div 
+                        animate={{ width: ['0%', '100%'] }}
+                        transition={{ duration: 10, repeat: Infinity }}
+                        className="h-full bg-jarvis-blue/40"
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Central J.A.R.V.I.S. Core - Perfectly Centered */}
