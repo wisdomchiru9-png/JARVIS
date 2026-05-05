@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion'
 import { Mic, MicOff, Settings, Shield, Cpu, Activity, Terminal, Maximize2, Minimize2, Calendar, ListTodo, Bell, Download, Zap, Database, Globe, MessageSquare, Music, Code, Mail, Layout, HardDrive } from 'lucide-react'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { cn } from './lib/utils'
+
+// --- HELPER FUNCTIONS ---
+const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ')
 
 // --- CORE NEURAL CONSTANTS ---
 const SYSTEM_PROMPT = `
