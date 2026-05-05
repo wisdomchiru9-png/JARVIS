@@ -78,16 +78,35 @@ const LOCAL_INTELLIGENCE: Record<string, string | ((input: string) => string)> =
 }
 
 const holographicStyles = `
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+  .scanline {
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, rgba(0, 212, 255, 0.05), transparent);
+    position: absolute;
+    top: 0;
+    left: 0;
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+    z-index: 50;
+  }
   .holographic-text {
     text-shadow: 
-      0 0 5px rgba(0, 212, 255, 0.8),
-      0 0 10px rgba(0, 212, 255, 0.5),
-      0 0 20px rgba(0, 212, 255, 0.3);
-    letter-spacing: 0.2em;
-    filter: blur(0.5px);
+      0 0 10px rgba(0, 212, 255, 0.9),
+      0 0 20px rgba(0, 212, 255, 0.6),
+      0 0 40px rgba(0, 212, 255, 0.3);
+    letter-spacing: 0.15em;
+    filter: blur(0.4px);
     background: linear-gradient(to bottom, #fff, #00d4ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    font-family: 'Inter', sans-serif;
+  }
+  .hud-glow {
+    filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
   }
 `
 
@@ -99,90 +118,89 @@ const JarvisCore = ({ status, audioData, onClick, isIntro = false, introPhase = 
   const isError = status === 'ERROR'
   const isProcessing = status === 'PROCESSING'
   const isSpeaking = status === 'SPEAKING'
+  const isListening = status === 'LISTENING'
   
   const baseColor = isError ? '#ef4444' : isProcessing ? '#ffffff' : '#00d4ff'
   
   return (
     <div className={cn(
       "relative flex items-center justify-center pointer-events-auto cursor-pointer group transition-all duration-1000",
-      isIntro ? "w-[450px] h-[450px] perspective-[2500px]" : "w-[300px] h-[300px] perspective-[1200px]"
+      isIntro ? "w-[500px] h-[500px] perspective-[2500px]" : "w-[350px] h-[300px] perspective-[1200px]"
     )} onClick={onClick} style={{ transformStyle: 'preserve-3d' }}>
-      {/* Background Subtle Glow - Optimized for Performance */}
+      {/* Enhanced Background Glow */}
       <motion.div 
         animate={{ 
-          scale: [1, 1.05, 1],
-          opacity: isSpeaking ? [0.2, 0.4, 0.2] : [0.05, 0.1, 0.05],
-          translateZ: isIntro ? [-30, 30, -30] : 0
+          scale: isSpeaking || isListening ? [1, 1.2, 1] : [1, 1.05, 1],
+          opacity: isSpeaking ? [0.3, 0.6, 0.3] : isListening ? [0.2, 0.4, 0.2] : [0.05, 0.1, 0.05],
+          translateZ: isIntro ? [-50, 50, -50] : -20
         }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute inset-8 rounded-full blur-[30px]"
+        transition={{ duration: isSpeaking ? 2 : 5, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute inset-4 rounded-full blur-[60px]"
         style={{ backgroundColor: baseColor, transformStyle: 'preserve-3d' }}
       />
 
-      {/* 3D Floating Technical Rings (Simplified for Lag reduction) */}
+      {/* Primary 3D Technical Rings */}
       <motion.div 
         animate={{ 
           rotate: 360, 
-          rotateX: isIntro ? [25, -25, 25] : [12, -12, 12],
-          rotateY: isIntro ? [-25, 25, -25] : 0
+          rotateX: isIntro ? [30, -30, 30] : [15, -15, 15],
+          rotateY: isIntro ? [-30, 30, -30] : [10, -10, 10]
         }}
         transition={{ 
-          rotate: { duration: 40, repeat: Infinity, ease: "linear" },
-          rotateX: { duration: 12, repeat: Infinity, ease: "easeInOut" },
-          rotateY: { duration: 15, repeat: Infinity, ease: "easeInOut" }
+          rotate: { duration: 50, repeat: Infinity, ease: "linear" },
+          rotateX: { duration: 15, repeat: Infinity, ease: "easeInOut" },
+          rotateY: { duration: 18, repeat: Infinity, ease: "easeInOut" }
         }}
         className="absolute inset-0"
         style={{ transformStyle: 'preserve-3d' }}
       >
-        <svg viewBox="0 0 100 100" className="w-full h-full opacity-30" style={{ transform: 'translateZ(20px)' }}>
-          <circle cx="50" cy="50" r="48" fill="none" stroke={baseColor} strokeWidth="0.05" strokeDasharray="2 6" />
-          {[...Array(12)].map((_, i) => (
+        <svg viewBox="0 0 100 100" className="w-full h-full opacity-40 hud-glow" style={{ transform: 'translateZ(30px)' }}>
+          <circle cx="50" cy="50" r="49" fill="none" stroke={baseColor} strokeWidth="0.1" strokeDasharray="1 5" />
+          <circle cx="50" cy="50" r="46" fill="none" stroke={baseColor} strokeWidth="0.05" strokeDasharray="10 2" className="opacity-20" />
+          {[...Array(24)].map((_, i) => (
             <rect 
               key={i}
-              x="49.9" y="0" width="0.2" height="4"
+              x="49.95" y="0" width="0.1" height="6"
               fill={baseColor}
-              transform={`rotate(${i * 30} 50 50)`}
-              className="opacity-40"
+              transform={`rotate(${i * 15} 50 50)`}
+              className="opacity-30"
             />
           ))}
         </svg>
       </motion.div>
 
-      {/* Segmented Stylish Ring - Layered 3D */}
+      {/* Secondary Fast Counter-Rotating Ring */}
       <motion.div 
-        animate={{ rotate: -360, translateZ: isIntro ? [40, 60, 40] : 15 }}
-        transition={{ 
-          rotate: { duration: 45, repeat: Infinity, ease: "linear" },
-          translateZ: { duration: 6, repeat: Infinity, ease: "easeInOut" }
-        }}
-        className="absolute inset-6"
-        style={{ transformStyle: 'preserve-3d' }}
+        animate={{ rotate: -360 }}
+        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        className="absolute inset-10"
+        style={{ transformStyle: 'preserve-3d', transform: 'translateZ(50px)' }}
       >
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <circle cx="50" cy="50" r="44" fill="none" stroke={baseColor} strokeWidth="1" strokeDasharray="25 15" className="opacity-10" />
-          <circle cx="50" cy="50" r="44" fill="none" stroke={baseColor} strokeWidth="1" strokeDasharray="10 140" strokeLinecap="round" className="opacity-50" />
-          <circle cx="50" cy="50" r="44" fill="none" stroke="#fbbf24" strokeWidth="1" strokeDasharray="3 147" strokeLinecap="round" className="opacity-70" />
+        <svg viewBox="0 0 100 100" className="w-full h-full opacity-30 hud-glow">
+          <circle cx="50" cy="50" r="44" fill="none" stroke={baseColor} strokeWidth="0.5" strokeDasharray="30 10" strokeLinecap="round" />
+          <circle cx="50" cy="50" r="44" fill="none" stroke="#fbbf24" strokeWidth="0.8" strokeDasharray="2 148" strokeLinecap="round" className="opacity-60" />
         </svg>
       </motion.div>
 
-      {/* Compact Neural Visualizer - Throttled Samples */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ transformStyle: 'preserve-3d', transform: `translateZ(${isIntro ? '60px' : '30px'})` }}>
-        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
-          {audioData.slice(0, 16).map((value, i) => {
-            const angle = (i * 360) / 16
-            const length = 1 + (value * 0.05)
-            const radius = 38
+      {/* Neural Reactive Visualizer Arcs */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ transformStyle: 'preserve-3d', transform: `translateZ(${isIntro ? '80px' : '45px'})` }}>
+        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible hud-glow">
+          {audioData.slice(0, 32).map((value, i) => {
+            const angle = (i * 360) / 32
+            const length = 2 + (value * 0.08)
+            const radius = 40
             
             return (
-              <motion.circle
+              <motion.line
                 key={i}
-                cx={50 + (radius + length) * Math.cos((angle * Math.PI) / 180)}
-                cy={50 + (radius + length) * Math.sin((angle * Math.PI) / 180)}
-                r={0.4 + (value * 0.008)}
-                fill={baseColor}
+                x1={50 + radius * Math.cos((angle * Math.PI) / 180)}
+                y1={50 + radius * Math.sin((angle * Math.PI) / 180)}
+                x2={50 + (radius + length) * Math.cos((angle * Math.PI) / 180)}
+                y2={50 + (radius + length) * Math.sin((angle * Math.PI) / 180)}
+                stroke={baseColor}
+                strokeWidth={0.3 + (value * 0.01)}
                 style={{ 
-                  opacity: 0.3 + (value * 0.004),
-                  filter: isIntro ? `drop-shadow(0 0 1px ${baseColor})` : 'none' // Remove filter for non-intro to save perf
+                  opacity: 0.4 + (value * 0.005),
                 }}
               />
             )
@@ -190,52 +208,27 @@ const JarvisCore = ({ status, audioData, onClick, isIntro = false, introPhase = 
         </svg>
       </div>
 
-      {/* Outer 3D Orbital Arcs */}
-      <motion.div 
-        animate={{ rotate: -360, rotateX: isIntro ? [15, -15, 15] : 0 }}
-        transition={{ 
-          rotate: { duration: 60, repeat: Infinity, ease: "linear" },
-          rotateX: { duration: 10, repeat: Infinity, ease: "easeInOut" }
-        }}
-        className="absolute inset-[-10px] pointer-events-none"
-        style={{ transformStyle: 'preserve-3d', transform: 'translateZ(5px)' }}
-      >
-        <svg viewBox="0 0 100 100" className="w-full h-full opacity-20">
-          {[...Array(4)].map((_, i) => (
-            <path 
-              key={i}
-              d="M 50 4 A 46 46 0 0 1 65 10"
-              fill="none"
-              stroke={baseColor}
-              strokeWidth="0.5"
-              strokeLinecap="round"
-              transform={`rotate(${i * 90} 50 50)`}
-            />
-          ))}
-        </svg>
-      </motion.div>
-
-      {/* Core Center - Optimized Perspective */}
+      {/* Core Center - Optimized Perspective & Centering */}
       <div className={cn(
-        "absolute rounded-full bg-black/95 backdrop-blur-3xl border border-white/5 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(0,0,0,0.8)] overflow-hidden",
-        isIntro ? "inset-24" : "inset-20"
-      )} style={{ transformStyle: 'preserve-3d', transform: `translateZ(${isIntro ? '120px' : '80px'})` }}>
-        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent pointer-events-none" />
+        "absolute rounded-full bg-black/98 backdrop-blur-3xl border border-white/10 flex flex-col items-center justify-center shadow-[0_0_60px_rgba(0,0,0,0.9)] overflow-hidden",
+        isIntro ? "inset-28" : "inset-24"
+      )} style={{ transformStyle: 'preserve-3d', transform: `translateZ(${isIntro ? '150px' : '90px'})` }}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,transparent_70%)] pointer-events-none" />
         
         <AnimatePresence mode="wait">
           {!isIntro ? (
             <motion.div
               key="normal"
               animate={{ 
-                scale: isSpeaking ? [1, 1.05, 1] : 1
+                scale: isSpeaking || isListening ? [1, 1.02, 1] : 1
               }}
-              className="flex flex-col items-center z-10 w-full px-2"
+              className="flex flex-col items-center justify-center z-10 w-full"
               style={{ transformStyle: 'preserve-3d' }}
             >
-              <div className="text-xl font-black tracking-[0.2em] text-white drop-shadow-[0_0_10px_rgba(0,212,255,0.8)] italic text-center w-full leading-none" style={{ transform: 'translateZ(20px)' }}>
+              <div className="text-[22px] font-black tracking-[0.25em] text-white drop-shadow-[0_0_15px_rgba(0,212,255,0.9)] italic text-center w-full leading-none pl-[0.25em]" style={{ transform: 'translateZ(30px)' }}>
                 J.A.R.V.I.S.
               </div>
-              <div className="text-[6px] font-mono tracking-[0.6em] text-jarvis-blue/50 mt-2 uppercase font-black text-center w-full" style={{ transform: 'translateZ(10px)' }}>
+              <div className="text-[7px] font-mono tracking-[0.8em] text-jarvis-blue/60 mt-3 uppercase font-black text-center w-full pl-[0.8em]" style={{ transform: 'translateZ(15px)' }}>
                 {status}
               </div>
             </motion.div>
@@ -249,92 +242,92 @@ const JarvisCore = ({ status, audioData, onClick, isIntro = false, introPhase = 
             >
               {introPhase === 1 && (
                 <motion.div key="p1" initial={{ z: -200 }} animate={{ z: 0 }} className="flex flex-col items-center">
-                  <div className="text-7xl font-black italic tracking-[0.1em] text-white mb-2 drop-shadow-[0_0_40px_rgba(0,212,255,0.8)]">JARVIS</div>
-                  <div className="text-[11px] text-jarvis-blue font-mono tracking-[1.2em] uppercase font-black">MARK LXXXV</div>
+                  <div className="text-8xl font-black italic tracking-[0.15em] text-white mb-2 drop-shadow-[0_0_50px_rgba(0,212,255,0.9)]">JARVIS</div>
+                  <div className="text-[12px] text-jarvis-blue font-mono tracking-[1.4em] uppercase font-black pl-[1.4em]">MARK LXXXV</div>
                 </motion.div>
               )}
               {introPhase === 2 && (
-                <motion.div key="p2" className="flex flex-col items-center gap-6">
+                <motion.div key="p2" className="flex flex-col items-center gap-8">
                   <div className="relative">
-                    <Cpu size={80} className="text-jarvis-blue" />
-                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute -inset-4 border-2 border-dashed border-jarvis-blue/40 rounded-full" />
+                    <Cpu size={100} className="text-jarvis-blue hud-glow" />
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute -inset-6 border-2 border-dashed border-jarvis-blue/40 rounded-full" />
                   </div>
-                  <div className="space-y-1">
-                    <div className="text-[14px] text-white font-mono tracking-[0.4em] uppercase font-black">Neural Engine</div>
-                    <div className="text-[10px] text-green-500 font-mono tracking-[0.2em]">MAXIMUM CAPACITY</div>
+                  <div className="space-y-2">
+                    <div className="text-[16px] text-white font-mono tracking-[0.5em] uppercase font-black">Neural Engine</div>
+                    <div className="text-[11px] text-green-500 font-mono tracking-[0.3em]">PEAK CAPACITY</div>
                   </div>
                 </motion.div>
               )}
               {introPhase === 3 && (
-                <motion.div key="p3" className="grid grid-cols-2 gap-10">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="p-5 border-2 border-jarvis-blue/30 rounded-2xl bg-jarvis-blue/10 shadow-[0_0_30px_rgba(0,212,255,0.2)]">
-                      <Shield size={48} className="text-jarvis-blue" />
+                <motion.div key="p3" className="grid grid-cols-2 gap-12">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="p-6 border-2 border-jarvis-blue/30 rounded-2xl bg-jarvis-blue/10 shadow-[0_0_40px_rgba(0,212,255,0.3)]">
+                      <Shield size={56} className="text-jarvis-blue" />
                     </div>
-                    <div className="text-[10px] text-white font-mono uppercase tracking-widest font-bold italic">Defense</div>
+                    <div className="text-[11px] text-white font-mono uppercase tracking-widest font-bold italic">Defense</div>
                   </div>
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="p-5 border-2 border-jarvis-blue/30 rounded-2xl bg-jarvis-blue/10 shadow-[0_0_30px_rgba(0,212,255,0.2)]">
-                      <Globe size={48} className="text-jarvis-blue" />
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="p-6 border-2 border-jarvis-blue/30 rounded-2xl bg-jarvis-blue/10 shadow-[0_0_40px_rgba(0,212,255,0.3)]">
+                      <Globe size={56} className="text-jarvis-blue" />
                     </div>
-                    <div className="text-[10px] text-white font-mono uppercase tracking-widest font-bold italic">Network</div>
+                    <div className="text-[11px] text-white font-mono uppercase tracking-widest font-bold italic">Network</div>
                   </div>
                 </motion.div>
               )}
               {introPhase === 4 && (
-                <motion.div key="p4" className="flex flex-col items-center gap-6">
-                  <div className="text-8xl font-black text-white italic tracking-tighter drop-shadow-[0_0_50px_rgba(0,212,255,0.5)]">
+                <motion.div key="p4" className="flex flex-col items-center gap-8">
+                  <div className="text-9xl font-black text-white italic tracking-tighter drop-shadow-[0_0_60px_rgba(0,212,255,0.6)]">
                     24<span className="text-jarvis-blue">/</span>7
                   </div>
-                  <div className="text-[12px] text-jarvis-blue font-mono tracking-[0.8em] uppercase font-black">Availability Protocol</div>
+                  <div className="text-[14px] text-jarvis-blue font-mono tracking-[1em] uppercase font-black pl-[1em]">Universal Access</div>
                 </motion.div>
               )}
               {introPhase === 5 && (
-                <motion.div key="p5" className="flex flex-col items-center gap-8">
-                  <div className="flex gap-3">
-                    {[...Array(6)].map((_, i) => (
-                      <motion.div key={i} animate={{ height: [10, 60, 10], opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }} className="w-2 bg-jarvis-blue rounded-full shadow-[0_0_15px_rgba(0,212,255,0.5)]" />
+                <motion.div key="p5" className="flex flex-col items-center gap-10">
+                  <div className="flex gap-4">
+                    {[...Array(8)].map((_, i) => (
+                      <motion.div key={i} animate={{ height: [15, 80, 15], opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.08 }} className="w-2.5 bg-jarvis-blue rounded-full shadow-[0_0_20px_rgba(0,212,255,0.6)]" />
                     ))}
                   </div>
-                  <div className="text-[12px] text-white font-mono tracking-[0.5em] uppercase font-black animate-pulse">Syncing Preferences...</div>
+                  <div className="text-[14px] text-white font-mono tracking-[0.6em] uppercase font-black animate-pulse">Syncing Protocols...</div>
                 </motion.div>
               )}
               {introPhase === 6 && (
-                <motion.div key="p6" initial={{ scale: 0.5 }} animate={{ scale: 1.2 }} className="flex flex-col items-center gap-6">
+                <motion.div key="p6" initial={{ scale: 0.5 }} animate={{ scale: 1.3 }} className="flex flex-col items-center gap-8">
                   <div className="relative">
-                    <Zap size={80} className="text-green-500 fill-green-500/20" />
-                    <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }} transition={{ duration: 1, repeat: Infinity }} className="absolute inset-0 bg-green-500 rounded-full blur-2xl -z-10" />
+                    <Zap size={100} className="text-green-500 fill-green-500/20 hud-glow" />
+                    <motion.div animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }} transition={{ duration: 1, repeat: Infinity }} className="absolute inset-0 bg-green-500 rounded-full blur-3xl -z-10" />
                   </div>
-                  <div className="text-2xl text-green-500 font-black italic tracking-[0.4em] uppercase drop-shadow-[0_0_20px_rgba(34,197,94,0.5)]">ALL SYSTEMS GO</div>
+                  <div className="text-3xl text-green-500 font-black italic tracking-[0.5em] uppercase drop-shadow-[0_0_30px_rgba(34,197,94,0.6)] pl-[0.5em]">SYSTEM ONLINE</div>
                 </motion.div>
               )}
             </motion.div>
           )}
         </AnimatePresence>
         
-      {/* Deep Core Pulsing Singularity */}
+        {/* Pulsing Core Singularity */}
         <motion.div 
           animate={{ 
-            scale: isProcessing ? [1, 2, 1] : [1, 1.2, 1],
-            opacity: isProcessing ? [0.4, 0.7, 0.4] : [0.2, 0.3, 0.2]
+            scale: isProcessing ? [1, 2.5, 1] : [1, 1.4, 1],
+            opacity: isProcessing ? [0.5, 0.8, 0.5] : [0.3, 0.5, 0.3]
           }}
-          transition={{ duration: isProcessing ? 0.6 : 3, repeat: Infinity }}
-          className="absolute w-2 h-2 rounded-full z-20"
-          style={{ backgroundColor: baseColor, boxShadow: `0 0 15px ${baseColor}` }}
+          transition={{ duration: isProcessing ? 0.5 : 3, repeat: Infinity }}
+          className="absolute w-3 h-3 rounded-full z-20"
+          style={{ backgroundColor: baseColor, boxShadow: `0 0 20px ${baseColor}` }}
         />
       </div>
 
-      {/* Floating Scanner Particle Sweep (Optimized) */}
+      {/* Floating Orbital Sweep */}
       <motion.div 
         animate={{ rotate: 360 }}
-        transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-        className="absolute inset-0 pointer-events-none opacity-30"
+        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        className="absolute inset-0 pointer-events-none opacity-40"
         style={{ transformStyle: 'preserve-3d' }}
       >
         <div 
-          className="w-full h-full rounded-full border-r-2 border-white/10"
+          className="w-full h-full rounded-full border-r-[3px] border-white/20"
           style={{ 
-            background: `conic-gradient(from 0deg, ${baseColor} 0deg, transparent 45deg)` 
+            background: `conic-gradient(from 0deg, ${baseColor}22 0deg, transparent 60deg)` 
           }}
         />
       </motion.div>
@@ -1418,6 +1411,8 @@ export default function App() {
       }}
     >
       <style>{holographicStyles}</style>
+      <div className="scanline" />
+      
       {/* 3D Environment Background */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div 
@@ -2085,26 +2080,28 @@ export default function App() {
               {reminders.map((reminder, idx) => (
                 <motion.div
                   key={reminder.id}
-                  initial={{ x: 20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
+                  initial={{ x: 20, opacity: 0, rotateY: -10 }}
+                  animate={{ x: 0, opacity: 1, rotateY: 0 }}
                   transition={{ delay: idx * 0.1 }}
-                  className="relative group p-4 bg-black/40 border-l-2 border-jarvis-blue/30 backdrop-blur-xl rounded-r-lg"
-                  style={{ transform: `translateZ(${idx * 10}px)` }}
+                  className="relative group p-4 bg-black/60 border border-jarvis-blue/20 backdrop-blur-xl rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.05)] overflow-hidden"
+                  style={{ transform: `translateZ(${idx * 15}px)` }}
                 >
-                  <div className="absolute top-2 right-3 text-[8px] font-mono text-jarvis-blue/40 uppercase">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-jarvis-blue/40" />
+                  <div className="absolute top-2 right-3 text-[7px] font-mono text-jarvis-blue/30 uppercase tracking-widest">
                     {reminder.time}
                   </div>
-                  <div className="text-white text-xs font-bold tracking-wide pr-12">
+                  <div className="text-white text-[11px] font-black tracking-wider pr-12 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
                     {reminder.text.toUpperCase()}
                   </div>
-                  <div className="mt-2 flex gap-1">
-                    <div className="h-[2px] w-full bg-jarvis-blue/10 rounded-full overflow-hidden">
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="h-[1px] flex-1 bg-jarvis-blue/10 rounded-full overflow-hidden">
                       <motion.div 
                         animate={{ width: ['0%', '100%'] }}
-                        transition={{ duration: 10, repeat: Infinity }}
-                        className="h-full bg-jarvis-blue/40"
+                        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                        className="h-full bg-jarvis-blue shadow-[0_0_10px_rgba(0,212,255,0.8)]"
                       />
                     </div>
+                    <div className="text-[6px] font-mono text-jarvis-blue/40 animate-pulse">ACTIVE</div>
                   </div>
                 </motion.div>
               ))}
@@ -2326,21 +2323,34 @@ export default function App() {
         <div className="w-1/3 h-48 border-l-2 border-b-2 border-jarvis-blue/20 p-5 font-mono text-[10px] overflow-hidden bg-black/40 backdrop-blur-xl rounded-bl-2xl relative group">
           {/* Active Project HUD Overlay */}
           <div className="absolute top-4 right-4 text-right">
-            <div className="text-[8px] text-jarvis-blue/40 uppercase mb-1">Project Interface</div>
-            <div className="text-[10px] text-white font-black italic">{activeProject.name}</div>
+            <div className="text-[8px] text-jarvis-blue/40 uppercase mb-1 font-black tracking-widest">Project Interface</div>
+            <div className="text-[10px] text-white font-black italic drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">{activeProject.name}</div>
           </div>
           
-          <div className="space-y-1 mt-2">
+          <div className="space-y-1.5 mt-2">
             {activeProject.files.slice(0, 5).map((file, i) => (
-              <div key={i} className="flex items-center gap-2 text-jarvis-blue/60">
-                <div className="w-1 h-1 bg-jarvis-blue/40 rounded-full" />
-                <span className="hover:text-white cursor-pointer transition-colors">{file}</span>
+              <div key={i} className="flex items-center gap-2 text-jarvis-blue/60 group/file">
+                <div className="w-1.5 h-[1px] bg-jarvis-blue/40 group-hover/file:w-3 transition-all" />
+                <span className="hover:text-white cursor-pointer transition-colors uppercase tracking-tighter">{file}</span>
               </div>
             ))}
-            <div className="text-[8px] text-jarvis-blue/20 italic mt-2">+{activeProject.files.length - 5} more files synchronized</div>
+            <div className="text-[8px] text-jarvis-blue/20 italic mt-3 uppercase tracking-widest">+{activeProject.files.length - 5} files synchronized</div>
           </div>
 
-          {/* Hexadecimal Background Stream */}
+          {/* Neural Load Indicator */}
+          <div className="absolute bottom-4 left-5 right-5">
+            <div className="flex justify-between text-[7px] text-jarvis-blue/40 uppercase mb-1 font-bold">
+              <span>Neural Load</span>
+              <span>{(stats.cpu * 0.8).toFixed(1)}%</span>
+            </div>
+            <div className="h-[1px] w-full bg-jarvis-blue/10 rounded-full overflow-hidden">
+              <motion.div 
+                animate={{ width: [`${stats.cpu * 0.5}%`, `${stats.cpu * 0.8}%`, `${stats.cpu * 0.6}%`] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="h-full bg-jarvis-blue shadow-[0_0_10px_rgba(0,212,255,0.8)]"
+              />
+            </div>
+          </div>
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none font-mono text-[8px] leading-none break-all p-2 overflow-hidden">
             {[...Array(20)].map((_, i) => (
               <motion.div
