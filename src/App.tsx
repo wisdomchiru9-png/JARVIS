@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
-import { Mic, MicOff, Settings, Shield, Cpu, Activity, Terminal, Maximize2, Minimize2, Calendar, ListTodo, Bell, Download, Zap, Database, Globe } from 'lucide-react'
+import { Mic, MicOff, Settings, Shield, Cpu, Activity, Terminal, Maximize2, Minimize2, Calendar, ListTodo, Bell, Download, Zap, Database, Globe, MessageSquare, Music, Code, Mail, Layout, HardDrive } from 'lucide-react'
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { GoogleGenerativeAI } from "@google/generative-ai"
@@ -361,6 +361,11 @@ export default function App() {
     'CALIBRATING VOICE RECOGNITION...',
     'JARVIS v2.4.0 ONLINE'
   ])
+  const [activeProject, setActiveProject] = useState({
+    name: 'JARVIS-LXXXV',
+    files: ['App.tsx', 'main.tsx', 'index.html', 'manifest.json', 'sw.js', 'vite.config.ts', 'package.json'],
+    activity: 'STANDBY'
+  })
   const [searchQuery, setSearchQuery] = useState<string | null>(null)
   const [stats, setStats] = useState({
     cpu: 12,
@@ -370,6 +375,7 @@ export default function App() {
     traffic: 128
   })
   const [tickerIndex, setTickerIndex] = useState(0)
+  const [showAppLauncher, setShowAppLauncher] = useState(false)
   const viralNews = [
     "NEURAL LINK: STABLE // LATENCY: 12ms",
     "GLOBAL NEWS: AI BREAKTHROUGH IN QUANTUM COMPUTING",
@@ -1375,6 +1381,26 @@ export default function App() {
     }
   }
 
+  const handleAppLaunch = (target: string) => {
+    playSound('startup')
+    addLog(`MANUAL OVERRIDE: LAUNCHING ${target.toUpperCase()}`)
+    
+    const appMap: Record<string, string> = {
+      'whatsapp': 'whatsapp://',
+      'spotify': 'spotify:',
+      'vscode': 'vscode://',
+      'discord': 'discord://',
+      'mail': 'mailto:',
+      'settings': 'ms-settings:',
+      'calculator': 'calculator:',
+      'notepad': 'ms-notepad:'
+    }
+
+    if (appMap[target]) {
+      window.location.href = appMap[target]
+    }
+  }
+
   return (
     <div 
       className="relative min-h-screen w-full bg-[#050505] overflow-hidden hud-grid perspective-[1200px]"
@@ -1399,7 +1425,27 @@ export default function App() {
         />
       </div>
 
-      {/* Master Power-Up Overlay */}
+      {/*const handleAppLaunch = (target: string) => {
+    playSound('startup')
+    addLog(`MANUAL OVERRIDE: LAUNCHING ${target.toUpperCase()}`)
+    
+    const appMap: Record<string, string> = {
+      'whatsapp': 'whatsapp://',
+      'spotify': 'spotify:',
+      'vscode': 'vscode://',
+      'discord': 'discord://',
+      'mail': 'mailto:',
+      'settings': 'ms-settings:',
+      'calculator': 'calculator:',
+      'notepad': 'ms-notepad:'
+    }
+
+    if (appMap[target]) {
+      window.location.href = appMap[target]
+    }
+  }
+
+  // Master Power-Up Overlay */}
       <AnimatePresence>
         {!isPowerOn && (
           <motion.div 
@@ -1861,6 +1907,20 @@ export default function App() {
           </button>
 
           <button 
+            onClick={() => { playSound('click'); setShowAppLauncher(prev => !prev); }}
+            className={cn(
+              "p-3 border backdrop-blur-md rounded-lg transition-all flex flex-col items-center justify-center gap-1 group",
+              showAppLauncher 
+                ? "bg-jarvis-blue/20 border-jarvis-blue text-jarvis-blue shadow-[0_0_15px_rgba(0,212,255,0.2)]" 
+                : "bg-black/40 border-jarvis-blue/10 text-jarvis-blue/60 hover:text-jarvis-blue"
+            )}
+            style={{ transform: 'translateZ(15px)' }}
+          >
+            <div className="text-[8px] uppercase tracking-widest font-black">Launcher</div>
+            <Layout size={16} className={cn(showAppLauncher && "animate-pulse")} />
+          </button>
+
+          <button 
             onClick={toggleFullscreen}
             className="p-3 border border-jarvis-blue/10 bg-black/40 backdrop-blur-md rounded-lg hover:bg-jarvis-blue/10 transition-all flex flex-col items-center justify-center gap-1 group"
             style={{ transform: 'translateZ(10px)' }}
@@ -2046,8 +2106,52 @@ export default function App() {
       </div>
 
       {/* Central J.A.R.V.I.S. Core - Perfectly Centered */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none perspective-[1500px]">
-        <motion.div
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none perspective-[1500px]">
+          {/* App Launcher Overlay */}
+          <AnimatePresence>
+            {showAppLauncher && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, rotateX: 45 }}
+                animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+                exit={{ opacity: 0, scale: 1.2, rotateX: -45 }}
+                className="absolute inset-0 z-40 pointer-events-auto flex items-center justify-center p-12 bg-black/40 backdrop-blur-md"
+              >
+                <div className="grid grid-cols-4 gap-8 max-w-2xl w-full">
+                  {[
+                    { id: 'whatsapp', icon: MessageSquare, label: 'WhatsApp' },
+                    { id: 'spotify', icon: Music, label: 'Spotify' },
+                    { id: 'vscode', icon: Code, label: 'VS Code' },
+                    { id: 'discord', icon: Globe, label: 'Discord' },
+                    { id: 'mail', icon: Mail, label: 'Outlook' },
+                    { id: 'calculator', icon: Cpu, label: 'Calculator' },
+                    { id: 'notepad', icon: Layout, label: 'Notepad' },
+                    { id: 'settings', icon: Settings, label: 'Settings' }
+                  ].map((app, idx) => (
+                    <motion.button
+                      key={app.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => handleAppLaunch(app.id)}
+                      className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-jarvis-blue/10 bg-black/60 hover:border-jarvis-blue hover:bg-jarvis-blue/10 transition-all group"
+                    >
+                      <app.icon size={32} className="text-jarvis-blue/40 group-hover:text-jarvis-blue transition-colors group-hover:scale-110 duration-300" />
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-jarvis-blue/60 group-hover:text-white transition-colors">{app.label}</span>
+                    </motion.button>
+                  ))}
+                </div>
+                
+                <button 
+                  onClick={() => setShowAppLauncher(false)}
+                  className="absolute bottom-24 px-8 py-3 border border-red-500/30 text-red-500 rounded-full font-mono text-xs hover:bg-red-500/10 transition-all uppercase tracking-[0.4em]"
+                >
+                  Close Launcher
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.div
           initial={{ opacity: 0, scale: 0.8, rotateX: 20 }}
           animate={{ opacity: 1, scale: 1, rotateX: 0 }}
           transition={{ duration: 1.2, ease: "circOut" }}
@@ -2212,6 +2316,22 @@ export default function App() {
       {/* Bottom HUD - Console */}
       <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end pointer-events-none">
         <div className="w-1/3 h-48 border-l-2 border-b-2 border-jarvis-blue/20 p-5 font-mono text-[10px] overflow-hidden bg-black/40 backdrop-blur-xl rounded-bl-2xl relative group">
+          {/* Active Project HUD Overlay */}
+          <div className="absolute top-4 right-4 text-right">
+            <div className="text-[8px] text-jarvis-blue/40 uppercase mb-1">Project Interface</div>
+            <div className="text-[10px] text-white font-black italic">{activeProject.name}</div>
+          </div>
+          
+          <div className="space-y-1 mt-2">
+            {activeProject.files.slice(0, 5).map((file, i) => (
+              <div key={i} className="flex items-center gap-2 text-jarvis-blue/60">
+                <div className="w-1 h-1 bg-jarvis-blue/40 rounded-full" />
+                <span className="hover:text-white cursor-pointer transition-colors">{file}</span>
+              </div>
+            ))}
+            <div className="text-[8px] text-jarvis-blue/20 italic mt-2">+{activeProject.files.length - 5} more files synchronized</div>
+          </div>
+
           {/* Hexadecimal Background Stream */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none font-mono text-[8px] leading-none break-all p-2 overflow-hidden">
             {[...Array(20)].map((_, i) => (
