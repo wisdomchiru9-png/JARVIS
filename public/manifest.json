@@ -3,9 +3,11 @@
   "short_name": "JARVIS",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#050505",
   "theme_color": "#050505",
   "description": "Just A Rather Very Intelligent System - WISDOM LXXXV",
+  "categories": ["productivity", "utilities", "ai"],
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3665/3665917.png",
