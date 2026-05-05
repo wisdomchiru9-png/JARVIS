@@ -878,7 +878,7 @@ export default function App() {
             silenceTimerRef.current = window.setTimeout(() => {
               addLog('Rapid response triggered (silence detected)')
               processFinalTranscript(interimTranscript)
-            }, 850) // Increased from 650ms for better reliability
+            }, 550) // Reduced from 850ms for ultra-fast reaction
           }
         }
       }
@@ -1182,10 +1182,10 @@ export default function App() {
         }
       }
       
-      // Artificial thinking delay for realism
+      // Artificial thinking delay for realism - Reduced for Fast Response
       setTimeout(() => {
         speak(response)
-      }, 600)
+      }, 150) // Reduced from 600ms
       return
     }
 
@@ -1369,10 +1369,17 @@ export default function App() {
       recognitionRef.current.stop()
     } else {
       try {
+        // Immediate reset for fast interaction
+        window.speechSynthesis.cancel()
         setTranscript('')
         setErrorMessage(null)
-        recognitionRef.current.start()
-        // status and isListening will be set in onstart
+        
+        // Ensure recognition is clean before starting
+        try { recognitionRef.current.stop() } catch(e) {}
+        
+        setTimeout(() => {
+          recognitionRef.current.start()
+        }, 50)
       } catch (err) {
         console.error('Failed to start speech recognition', err)
         setErrorMessage('Failed to start microphone. Please refresh.')
