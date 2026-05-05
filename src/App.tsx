@@ -292,6 +292,7 @@ export default function App() {
   const toggleListening = () => {
     // Basic toggle logic
     setStatus(prev => prev === 'LISTENING' ? 'STANDBY' : 'LISTENING')
+    addLog(status === 'LISTENING' ? 'MICROPHONE OFFLINE' : 'LISTENING FOR DIRECTIVE...')
   }
 
   const toggleAlwaysListening = () => setIsAlwaysListening(!isAlwaysListening)
@@ -324,14 +325,73 @@ export default function App() {
           >
             <div className="relative group cursor-pointer" onClick={handlePowerUp}>
               <motion.div 
-                animate={{ scale: [1, 1.05, 1] }}
+                animate={{ 
+                  scale: [1, 1.05, 1],
+                  boxShadow: ["0 0 20px rgba(0,212,255,0.1)", "0 0 60px rgba(0,212,255,0.3)", "0 0 20px rgba(0,212,255,0.1)"]
+                }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="w-56 h-56 rounded-full border-4 border-jarvis-blue/30 flex items-center justify-center bg-black relative"
+                className="w-64 h-64 rounded-full border border-jarvis-blue/20 flex flex-col items-center justify-center bg-black relative"
               >
-                <Cpu size={80} className="text-jarvis-blue/40" />
+                <Cpu size={60} className="text-jarvis-blue/40 mb-4" />
+                <div className="text-[10px] text-jarvis-blue/60 font-bold tracking-[0.5em] uppercase">Initialize</div>
               </motion.div>
-              <div className="mt-16 text-center">
-                <div className="text-white font-black italic text-4xl tracking-[0.2em] uppercase font-['Orbitron']">WISDOM-LXXXV</div>
+              <div className="mt-12 text-center">
+                <div className="text-white font-black italic text-4xl tracking-[0.2em] uppercase font-['Orbitron'] drop-shadow-[0_0_20px_#00d4ff]">WISDOM-LXXXV</div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Vocal Calibration Modal */}
+      <AnimatePresence>
+        {showVocalSettings && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[700] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-6 pointer-events-auto"
+          >
+            <div className="w-full max-w-md bg-black border border-jarvis-blue/20 p-10 rounded-3xl">
+              <h2 className="text-xl font-bold text-white font-['Orbitron'] mb-8 uppercase tracking-widest">Vocal Calibration</h2>
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <div className="flex justify-between text-[10px] text-jarvis-blue/60 uppercase font-bold"><span>Pitch</span><span>{vocalSettings.pitch}</span></div>
+                  <input type="range" min="0.5" max="1.5" step="0.1" value={vocalSettings.pitch} onChange={(e) => setVocalSettings(prev => ({ ...prev, pitch: parseFloat(e.target.value) }))} className="w-full accent-jarvis-blue" />
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between text-[10px] text-jarvis-blue/60 uppercase font-bold"><span>Rate</span><span>{vocalSettings.rate}</span></div>
+                  <input type="range" min="0.5" max="1.5" step="0.1" value={vocalSettings.rate} onChange={(e) => setVocalSettings(prev => ({ ...prev, rate: parseFloat(e.target.value) }))} className="w-full accent-jarvis-blue" />
+                </div>
+                <button onClick={() => { setShowVocalSettings(false); speak("Vocal protocols updated, Sir."); }} className="w-full py-4 bg-jarvis-blue text-black font-bold uppercase rounded-xl mt-4">Apply Changes</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* API Key Modal */}
+      <AnimatePresence>
+        {showApiKeyInput && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[700] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-6 pointer-events-auto"
+          >
+            <div className="w-full max-w-md bg-black border border-jarvis-blue/20 p-10 rounded-3xl">
+              <h2 className="text-xl font-bold text-white font-['Orbitron'] mb-4 uppercase tracking-widest">Security Protocol</h2>
+              <p className="text-xs text-jarvis-blue/60 mb-6 uppercase leading-relaxed">Cognitive Module Authorization Required</p>
+              <input 
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="ENTER ACCESS KEY..."
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white text-sm focus:outline-none focus:border-jarvis-blue/50 mb-6"
+              />
+              <div className="flex gap-4">
+                <button onClick={() => setShowApiKeyInput(false)} className="flex-1 py-4 border border-white/10 text-white/40 uppercase font-bold rounded-xl text-xs">Cancel</button>
+                <button onClick={() => { localStorage.setItem('JARVIS_API_KEY', apiKey); setShowApiKeyInput(false); speak("Access granted. Neural links stabilized."); }} className="flex-1 py-4 bg-jarvis-blue text-black font-bold uppercase rounded-xl text-xs">Authorize</button>
               </div>
             </div>
           </motion.div>
